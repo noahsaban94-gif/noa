@@ -16,6 +16,10 @@ export const CUSTOMERS_ROOT_DRIVE_URL = 'https://drive.google.com/drive/folders/
 export const DELIVERY_NOTES_ORIGINAL_DRIVE_FOLDER_ID = '1Hnq5RjGmE0368ZCAKBratRJGzaj0wJJl';
 export const DELIVERY_NOTES_ORIGINAL_DRIVE_URL = 'https://drive.google.com/drive/folders/1Hnq5RjGmE0368ZCAKBratRJGzaj0wJJl';
 
+export const COMAX_ORDERS_2026_DRIVE_FOLDER_ID = '1aiBomF1MRJZueGEvFpJRrhPV-2lvIMWF';
+export const COMAX_ORDERS_2026_DRIVE_URL = 'https://drive.google.com/drive/folders/1aiBomF1MRJZueGEvFpJRrhPV-2lvIMWF';
+export const COMAX_ORDERS_2026_FOLDER_NAME = 'Saban Logistics Cloud / הזמנות קומקס 2026';
+
 // ========================================================
 // Strict Item Formatting: 1. 📦 מק"ט: [מק"ט] | [שם פריט] | כמות: [כמות]
 // ========================================================
