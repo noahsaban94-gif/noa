@@ -307,7 +307,7 @@ app.post('/api/save-annotated-doc', async (req, res) => {
 });
 
 // 6. Google Apps Script (GAS) Web App Endpoint Proxy
-const GAS_ENDPOINT_URL = 'https://script.google.com/macros/s/AKfycbynQG7VMfuI1BOR3pOENcgqOLRcd_N--nw7KlAXUmMEA8T5CBKG4gt8l2AS7jrj47fL/exec';
+const GAS_ENDPOINT_URL = 'https://script.google.com/macros/s/AKfycbxOz8mZNWr6k3jtm1hAh-r9I-ExeUNB26vLO4R_3wLRkcI5CW64YOSYH3E1EHwkZZ-3/exec';
 const TARGET_SPREADSHEET_ID = '1VA9J6n9IYcooO_s2xOpnkvyDQWWQD3pfhh0cnenCkoA';
 
 // 3 Core Email Orders fetched from Saban logistics inbox
