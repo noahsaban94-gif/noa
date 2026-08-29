@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 
 export default function App() {
+  const [theme, setTheme] = useState<'dark' | 'light'>('dark');
   const [orders, setOrders] = useState<LogisticsOrder[]>([]);
   const [activeOverlayView, setActiveOverlayView] = useState<'dashboard' | 'morning_report' | null>(null);
   const [selectedOrderModal, setSelectedOrderModal] = useState<LogisticsOrder | null>(null);
@@ -158,6 +159,8 @@ export default function App() {
       <div className="relative z-10 w-full h-full">
         <WhatsAppChat
           orders={orders}
+          theme={theme}
+          onToggleTheme={() => setTheme(t => t === 'dark' ? 'light' : 'dark')}
           onAddNewOrder={handleAddNewOrder}
           onUpdateOrder={handleUpdateOrder}
           onRequestView={(view) => setActiveOverlayView(view)}
