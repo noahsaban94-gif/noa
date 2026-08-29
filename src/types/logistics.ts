@@ -33,6 +33,24 @@ export interface DepositCalculation {
   status: ' תקין' | 'יש בלות' | 'יש משטחים' | 'פטור' | 'דורש מעקב מנוף' | 'אי התאמה';
 }
 
+export interface OrderEmailMeta {
+  messageId?: string;
+  senderEmail: string;
+  senderName: string;
+  recipientEmail: string;
+  subject: string;
+  sentAt: string;
+  systemOrigin: string; // e.g. "comax.co.il"
+  securityInfo?: string; // "הצפנה סטנדרטית (TLS)"
+  importanceNote?: string; // "אנחנו סבורים שההודעה הזו חשובה."
+  pdfFileName?: string;
+  pdfFileSize?: string;
+  pdfDriveUrl?: string;
+  driveFolderUrl?: string;
+  driveFolderName?: string;
+  rawBody?: string;
+}
+
 export interface LogisticsOrder {
   id: string;
   orderNumber: string;
@@ -64,6 +82,11 @@ export interface LogisticsOrder {
   signedNoteImageUrl?: string;
   signedAt?: string;
   distanceKm?: number;
+  // Comax & Email Ingestion properties
+  emailMeta?: OrderEmailMeta;
+  orderDocumentUrl?: string;
+  orderDocumentName?: string;
+  orderDocumentType?: 'comax_pdf' | 'signed_delivery_note' | 'invoice';
 }
 
 export interface DriverInfo {
@@ -95,7 +118,9 @@ export interface ChatMessage {
   whatsappShareUrl?: string;
   chatId?: string;
   isStatusResetAlert?: boolean;
-  viewTrigger?: 'dashboard' | 'morning_report';
+  viewTrigger?: 'dashboard' | 'morning_report' | 'order_files';
+  isEmailIngestionCard?: boolean;
+  orderEmailMeta?: OrderEmailMeta;
 }
 
 export interface CanvasAnnotation {
