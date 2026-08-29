@@ -1,0 +1,23 @@
+{
+  "short_name": "סידור נועה",
+  "name": "סידור נועה AI — ח. סבן חומרי בניין",
+  "icons": [
+    {
+      "src": "https://i.ibb.co/whtMgBNC/Gemini-Generated-Image-2.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "https://i.ibb.co/whtMgBNC/Gemini-Generated-Image-2.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#0B0F17",
+  "theme_color": "#06B6D4",
+  "display": "standalone",
+  "orientation": "portrait",
+  "dir": "rtl",
+  "lang": "he"
+}
