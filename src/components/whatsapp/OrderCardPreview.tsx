@@ -14,7 +14,11 @@ import {
   Truck, 
   Boxes,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  FileText,
+  FolderOpen,
+  Mail,
+  Download
 } from 'lucide-react';
 import { LogisticsOrder } from '../../types/logistics';
 import { createMakePayload } from '../../lib/parser';
@@ -186,7 +190,7 @@ export const OrderCardPreview: React.FC<OrderCardPreviewProps> = ({
         </div>
 
         {/* סיכום פקדונות (נועה AI) */}
-        <div className="p-3 rounded-xl bg-slate-950/40 border border-slate-800 mb-4">
+        <div className="p-3 rounded-xl bg-slate-950/40 border border-slate-800 mb-3">
           <div className="flex items-center justify-between text-xs font-medium text-slate-300 mb-2">
             <span className="flex items-center gap-1.5 text-slate-400">
               <Layers className="w-3.5 h-3.5 text-amber-400" />
@@ -206,6 +210,48 @@ export const OrderCardPreview: React.FC<OrderCardPreviewProps> = ({
             </div>
           </div>
         </div>
+
+        {/* קובץ הזמנה מקור / סנכרון Drive וקומקס (אם קיים) */}
+        {(order.orderDocumentUrl || order.driveFolderUrl || order.emailMeta) && (
+          <div className="p-2.5 rounded-xl bg-emerald-950/40 border border-emerald-500/30 mb-3 text-xs flex items-center justify-between flex-wrap gap-2">
+            <div className="flex items-center gap-2 min-w-0">
+              <FileText className="w-4 h-4 text-emerald-400 shrink-0" />
+              <div className="truncate">
+                <span className="font-bold text-emerald-200 block truncate">
+                  {order.orderDocumentName || order.emailMeta?.pdfFileName || `קובץ הזמנה קומקס #${order.orderNumber}`}
+                </span>
+                <span className="text-[10px] text-emerald-400/80">
+                  {order.emailMeta ? 'נקלט מהמייל • מסונכרן ל-Google Drive' : 'מסמך מקור ב-Drive'}
+                </span>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-1.5">
+              {order.driveFolderUrl && (
+                <a
+                  href={order.driveFolderUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-2 py-1 bg-emerald-900/60 hover:bg-emerald-900 text-emerald-300 border border-emerald-700/60 rounded-lg text-[10px] font-bold flex items-center gap-1 transition"
+                  title="פתח תיקיית Drive של ההזמנה"
+                >
+                  <FolderOpen className="w-3 h-3" />
+                  <span>תיקיית Drive</span>
+                </a>
+              )}
+
+              <a
+                href={order.orderDocumentUrl || order.driveFolderUrl || 'https://drive.google.com'}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-2 py-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-[10px] font-bold flex items-center gap-1 transition shadow"
+              >
+                <Download className="w-3 h-3" />
+                <span>צפה בקובץ</span>
+              </a>
+            </div>
+          </div>
+        )}
 
         {/* סרגל פעולות ראשי */}
         <div className="flex items-center gap-2 pt-2 border-t border-slate-800">
