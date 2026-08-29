@@ -203,7 +203,7 @@ export const OrderFilesView: React.FC<OrderFilesViewProps> = ({
           </div>
 
           <a
-            href="https://drive.google.com/drive/folders/1SabanLogistics_Comax_Orders_2026"
+            href="https://drive.google.com/drive/folders/1aiBomF1MRJZueGEvFpJRrhPV-2lvIMWF"
             target="_blank"
             rel="noopener noreferrer"
             className="text-amber-400 hover:underline flex items-center gap-1 font-semibold"
@@ -250,7 +250,7 @@ export const OrderFilesView: React.FC<OrderFilesViewProps> = ({
               .filter(o => o.orderNumber === '6215194')
               .map(order => (
                 <PhysicalOrderDocumentCard
-                  key={order.id}
+                  key={`featured-${order.id}`}
                   order={order}
                   emailMeta={order.emailMeta || ARUGAT_HABOSEM_EMAIL_META}
                   onDispatch={() => {
@@ -274,7 +274,7 @@ export const OrderFilesView: React.FC<OrderFilesViewProps> = ({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {fileOrders.map(order => (
               <div 
-                key={order.id}
+                key={`archive-file-${order.id}`}
                 className="p-4 rounded-2xl bg-[#111B21] border border-slate-800 hover:border-slate-700 transition space-y-3 flex flex-col justify-between"
               >
                 <div>
