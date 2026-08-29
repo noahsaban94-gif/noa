@@ -568,7 +568,8 @@ app.post('/api/gas/reconcile', async (req, res) => {
 // EMAIL LISTENER & COMAX ORDER INGESTION ENGINE (NOA AI)
 // =========================================================================
 
-const COMAX_DRIVE_FOLDER_URL = 'https://drive.google.com/drive/folders/1SabanLogistics_Comax_Orders_2026';
+const COMAX_DRIVE_FOLDER_ID = '1aiBomF1MRJZueGEvFpJRrhPV-2lvIMWF';
+const COMAX_DRIVE_FOLDER_URL = 'https://drive.google.com/drive/folders/1aiBomF1MRJZueGEvFpJRrhPV-2lvIMWF';
 const COMAX_DRIVE_FOLDER_NAME = 'Google Drive / Saban Logistics Cloud / הזמנות קומקס 2026';
 
 // Pre-defined / cached email orders
