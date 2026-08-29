@@ -18,7 +18,7 @@ export const ARUGAT_HABOSEM_EMAIL_META: OrderEmailMeta = {
   pdfFileName: 'Comax_Order_6215194_Arugat_HaBosem.pdf',
   pdfFileSize: '184 KB',
   pdfDriveUrl: 'https://drive.google.com/file/d/1_6215194_ArugatHaBosem_ComaxDoc_PDF/view',
-  driveFolderUrl: 'https://drive.google.com/drive/folders/1SabanLogistics_Comax_Orders_2026',
+  driveFolderUrl: 'https://drive.google.com/drive/folders/1aiBomF1MRJZueGEvFpJRrhPV-2lvIMWF',
   driveFolderName: 'Google Drive / Saban Logistics Cloud / הזמנות קומקס 2026',
   rawBody: `טופס הזמנה ממוחשב - ח. סבן חומרי בניין (1994) בע"מ
 מספר הזמנה: 6215194
@@ -76,7 +76,7 @@ export const ARUGAT_HABOSEM_ORDER: LogisticsOrder = {
   craneDescription: 'משאית מנוף 26 טון לפריקת 18 בלות + 2 משטחים',
   wazeUrl: generateWazeUrl('דרך הבשמים 8, בצרה'),
   clientPhone: '054-998-1244',
-  driveFolderUrl: 'https://drive.google.com/drive/folders/1SabanLogistics_Comax_Orders_2026',
+  driveFolderUrl: 'https://drive.google.com/drive/folders/1aiBomF1MRJZueGEvFpJRrhPV-2lvIMWF',
   distanceKm: 9.4,
   notes: 'קליטת מייל קומקס אוטומטית ע"י נועה AI • הועתק ל-Google Drive • יעד: בצרה',
   totalWeightKg: 24500,
