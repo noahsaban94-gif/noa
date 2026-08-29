@@ -54,7 +54,7 @@ export const PhysicalOrderDocumentCard: React.FC<PhysicalOrderDocumentCardProps>
     pdfFileName: `Comax_Order_${order.orderNumber}_${order.customerName.replace(/\s+/g, '_')}.pdf`,
     pdfFileSize: '184 KB',
     pdfDriveUrl: order.orderDocumentUrl || 'https://drive.google.com/file/d/1_6215194_ArugatHaBosem_ComaxDoc_PDF/view',
-    driveFolderUrl: order.driveFolderUrl || 'https://drive.google.com/drive/folders/1SabanLogistics_Comax_Orders_2026',
+    driveFolderUrl: order.driveFolderUrl || 'https://drive.google.com/drive/folders/1aiBomF1MRJZueGEvFpJRrhPV-2lvIMWF',
     driveFolderName: 'Google Drive / Saban Logistics Cloud / הזמנות קומקס 2026'
   };
 
