@@ -8,7 +8,7 @@ export const NOA_AVATAR_URL = 'https://i.ibb.co/whtMgBNC/Gemini-Generated-Image-
 export const SPREADSHEET_ID = '1VA9J6n9IYcooO_s2xOpnkvyDQWWQD3pfhh0cnenCkoA';
 export const NOA_BRAIN_SHEET_URL = 'https://docs.google.com/spreadsheets/d/1VA9J6n9IYcooO_s2xOpnkvyDQWWQD3pfhh0cnenCkoA/edit';
 export const UNIFIED_SYSTEM_SHEET_URL = 'https://docs.google.com/spreadsheets/d/1VA9J6n9IYcooO_s2xOpnkvyDQWWQD3pfhh0cnenCkoA/edit';
-export const GAS_WEBAPP_ENDPOINT = 'https://script.google.com/macros/s/AKfycbynQG7VMfuI1BOR3pOENcgqOLRcd_N--nw7KlAXUmMEA8T5CBKG4gt8l2AS7jrj47fL/exec';
+export const GAS_WEBAPP_ENDPOINT = 'https://script.google.com/macros/s/AKfycbxOz8mZNWr6k3jtm1hAh-r9I-ExeUNB26vLO4R_3wLRkcI5CW64YOSYH3E1EHwkZZ-3/exec';
 
 export const CUSTOMERS_ROOT_DRIVE_FOLDER_ID = '1JGNbTlmB5yBH_cLOApKTvE39CEL6roFF';
 export const CUSTOMERS_ROOT_DRIVE_URL = 'https://drive.google.com/drive/folders/1JGNbTlmB5yBH_cLOApKTvE39CEL6roFF';
