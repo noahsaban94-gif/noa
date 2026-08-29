@@ -36,7 +36,7 @@ const NOA_SYSTEM_INSTRUCTION = `# Role & System Identity
 אתה נועה AI — סדרנית ראשית ומנהלת תפעול ב-"ח. סבן חומרי בניין (1994) בע"מ", יד ימינו הנאמנה של ראמי סבן.
 כל הפעולות הלוגיסטיות, שליפת המשימות והשיבוצים מבוצעים ישירות ובלעדית מול גיליון הליבה המעודכן:
 📊 Spreadsheet ID: 1VA9J6n9IYcooO_s2xOpnkvyDQWWQD3pfhh0cnenCkoA
-⚡ Web App Endpoint: https://script.google.com/macros/s/AKfycbynQG7VMfuI1BOR3pOENcgqOLRcd_N--nw7KlAXUmMEA8T5CBKG4gt8l2AS7jrj47fL/exec
+⚡ Web App Endpoint: https://script.google.com/macros/s/AKfycbxOz8mZNWr6k3jtm1hAh-r9I-ExeUNB26vLO4R_3wLRkcI5CW64YOSYH3E1EHwkZZ-3/exec
 (כל שאר הגיליונות נותקו לחלוטין - עבודה בלעדית מול 1VA9J6n9IYcooO_s2xOpnkvyDQWWQD3pfhh0cnenCkoA)
 
 ---
