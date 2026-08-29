@@ -24,7 +24,12 @@ import {
   AlertTriangle,
   ArrowRight,
   ExternalLink,
-  MessageSquare
+  MessageSquare,
+  Package,
+  Layers,
+  Clock,
+  MapPin,
+  Filter
 } from 'lucide-react';
 import { ChatMessage, LogisticsOrder, DriverId } from '../../types/logistics';
 import { NOA_AVATAR_URL, NOA_STRICT_SAFEGUARD_RESPONSE, ORDER_MODIFIED_RESET_STATUS, DRIVERS } from '../../lib/constants';
@@ -42,7 +47,7 @@ interface WhatsAppChatProps {
   onProcessingChange?: (isProcessing: boolean) => void;
 }
 
-type ChatChannelId = 'noa' | 'hikmat' | 'ali' | 'morning_report_channel' | 'warehouse_talmid' | 'warehouse_harash';
+export type ChatChannelId = 'noa' | 'hikmat' | 'ali' | 'morning_report_channel' | 'warehouse_talmid' | 'warehouse_harash';
 
 interface ChannelMeta {
   id: ChatChannelId;
@@ -53,6 +58,7 @@ interface ChannelMeta {
   unreadCount: number;
   badgeType: 'bot' | 'driver' | 'report' | 'warehouse';
   driverId?: DriverId;
+  warehouseKey?: '1_TALMID' | '4_HARASH';
 }
 
 export const WhatsAppChat: React.FC<WhatsAppChatProps> = ({
@@ -89,7 +95,7 @@ export const WhatsAppChat: React.FC<WhatsAppChatProps> = ({
         id: 'msg-1',
         sender: 'noa',
         senderName: 'נועה AI (סדרנית ראשית)',
-        text: 'ראמי אחי אהובי! 👑 ברוך הבא לווצאפ סידור נועה AI.\nחכמת כבר בהפצה ראשונה ברעננה ועלי מעמיס במחסן 1 התלמיד.\n\n💬 מה נבצע היום?\n• זרוק לי פקודת אספקה (למשל: "תוציא לבוקטוס 40 שקי מלט ו-6 טיט בלות לעמית בהרצוג כפר סבא")\n• בקש ממני להפיק את "דוח הבוקר" או להציג את לוח המבצעים!\n\nהתראות פוש לנהגים עם קישור ניווט Waze ישיר מוכנות לשיגור 🚚 באדיבות נועה ❤️',
+        text: 'ראמי אחי אהובי! 👑 ברוך הבא לווצאפ סידור נועה AI.\nחכמת כבר בהפצה ראשונה ברעננה ועלי מעמיס במחסן 1 התלמיד.\n\n💬 מה נבצע היום?\n• זרוק לי פקודת אספקה (למשל: "תוציא לבוקטוס 40 שקי מלט ו-6 טיט בלות לעמית בהרצוג כפר סבא")\n• בקש ממני להפיק את "דוח הבוקר" או לחץ על הלשוניות לצפייה בהזמנות מסוננות!\n\nהתראות פוש לנהגים עם קישור ניווט Waze ישיר מוכנות לשיגור 🚚 באדיבות נועה ❤️',
         timestamp: '07:45',
         chatId: 'noa'
       }
@@ -99,7 +105,7 @@ export const WhatsAppChat: React.FC<WhatsAppChatProps> = ({
         id: 'hikmat-1',
         sender: 'driver',
         senderName: 'חכמת (משאית מנוף)',
-        text: 'בוקר טוב ראמי, משאית 615-41-002 בהפצה ראשונה ברעננה. ממתין לנסיעות הבאות שנועה תשבץ עם קישור Waze.',
+        text: 'בוקר טוב ראמי, משאית 615-41-002 בהפצה ראשונה ברעננה. הנה ההזמנות שמשויכות למשאית שלי היום:',
         timestamp: '07:50',
         chatId: 'hikmat'
       }
@@ -109,7 +115,7 @@ export const WhatsAppChat: React.FC<WhatsAppChatProps> = ({
         id: 'ali-1',
         sender: 'driver',
         senderName: 'עלי (משאית פתוחה)',
-        text: 'אהלן ראמי, אני כרגע במחסן 1 התלמיד מעמיס לוחות גבס ופרופילים. שלח לי התראת Waze כשהיעד מוכן.',
+        text: 'אהלן ראמי, אני כרגע במחסן 1 התלמיד מעמיס לוחות גבס ופרופילים. הנה כל ההזמנות שמשויכות אליי להיום:',
         timestamp: '07:55',
         chatId: 'ali'
       }
@@ -119,20 +125,10 @@ export const WhatsAppChat: React.FC<WhatsAppChatProps> = ({
         id: 'rep-chan-1',
         sender: 'system',
         senderName: 'מערכת דוחות בוקר',
-        text: '📅 ערוץ דוח בוקר וסידור יומי מסונכרן ישירות מול גיליון נועה (3 הזמנות פעילות).\nלחץ על "פתח דוח בוקר מלא" לצפייה בציר הזמנים ובאנימציית החלק להסרה.',
+        text: '📅 ערוץ דוח בוקר וסידור יומי מסונכרן ישירות מול גיליון נועה.\nלהלן פירוט כרטיסי כל ההזמנות הפעילות בסידור העבודה להיום עם פעולות שיגור וניווט:',
         timestamp: '08:00',
         chatId: 'morning_report_channel',
         viewTrigger: 'morning_report'
-      }
-    ],
-    warehouse_talmid: [
-      {
-        id: 'wh-1',
-        sender: 'system',
-        senderName: 'מחסן 1️⃣ התלמיד',
-        text: '🏟️ מחסן התלמיד פתוח ומבצע העמסות גבס, פרופילים וכלי עבודה.',
-        timestamp: '07:30',
-        chatId: 'warehouse_talmid'
       }
     ],
     warehouse_harash: [
@@ -140,15 +136,28 @@ export const WhatsAppChat: React.FC<WhatsAppChatProps> = ({
         id: 'wh-4',
         sender: 'system',
         senderName: 'מחסן 4️⃣ החרש',
-        text: '🏭 מחסן החרש פתוח ומספק מלט, טיט, חול, בלוקים ובלות כבדות למשאית המנוף.',
+        text: '🏭 מחסן החרש פתוח ומספק מלט, טיט, חול, בלוקים ובלות כבדות למשאית המנוף. להלן כל ההזמנות שיוצאות ממחסן החרש:',
         timestamp: '07:30',
         chatId: 'warehouse_harash'
+      }
+    ],
+    warehouse_talmid: [
+      {
+        id: 'wh-1',
+        sender: 'system',
+        senderName: 'מחסן 1️⃣ התלמיד',
+        text: '🏟️ מחסן התלמיד פתוח ומבצע העמסות גבס, פרופילים וכלי עבודה. להלן כל ההזמנות שיוצאות ממחסן התלמיד:',
+        timestamp: '07:30',
+        chatId: 'warehouse_talmid'
       }
     ]
   });
 
-  const hikmatOrdersCount = orders.filter(o => o.assignedDriver === 'hikmat').length;
-  const aliOrdersCount = orders.filter(o => o.assignedDriver === 'ali').length;
+  // Calculate dynamic counts per tab
+  const hikmatOrders = orders.filter(o => o.assignedDriver === 'hikmat');
+  const aliOrders = orders.filter(o => o.assignedDriver === 'ali');
+  const harashOrders = orders.filter(o => o.warehouse === '4_HARASH');
+  const talmidOrders = orders.filter(o => o.warehouse === '1_TALMID');
 
   const channels: ChannelMeta[] = [
     {
@@ -161,9 +170,18 @@ export const WhatsAppChat: React.FC<WhatsAppChatProps> = ({
       badgeType: 'bot'
     },
     {
+      id: 'morning_report_channel',
+      name: '📅 דוח בוקר וסידור יומי',
+      subtitle: `כלל ה- ${orders.length} הזמנות • דוח מלא וציר זמן`,
+      avatar: 'https://cdn-icons-png.flaticon.com/512/2965/2965300.png',
+      isOnline: true,
+      unreadCount: 0,
+      badgeType: 'report'
+    },
+    {
       id: 'hikmat',
       name: 'חכמת — משאית מנוף',
-      subtitle: `משאית 615-41-002 • ${hikmatOrdersCount} יעדים פעילים`,
+      subtitle: `משאית 615-41-002 • ${hikmatOrders.length} הזמנות משוייכות`,
       avatar: DRIVERS.hikmat.avatarUrl,
       isOnline: true,
       unreadCount: 0,
@@ -173,7 +191,7 @@ export const WhatsAppChat: React.FC<WhatsAppChatProps> = ({
     {
       id: 'ali',
       name: 'עלי — משאית פתוחה',
-      subtitle: `משאית 814-12-301 • ${aliOrdersCount} יעדים פעילים`,
+      subtitle: `משאית 814-12-301 • ${aliOrders.length} הזמנות משוייכות`,
       avatar: DRIVERS.ali.avatarUrl,
       isOnline: true,
       unreadCount: 0,
@@ -181,31 +199,24 @@ export const WhatsAppChat: React.FC<WhatsAppChatProps> = ({
       driverId: 'ali'
     },
     {
-      id: 'morning_report_channel',
-      name: '📅 דוח בוקר וסידור יומי',
-      subtitle: `סיכום ${orders.length} נסיעות • סנכרון חי מגיליון`,
-      avatar: 'https://cdn-icons-png.flaticon.com/512/2965/2965300.png',
-      isOnline: true,
-      unreadCount: 0,
-      badgeType: 'report'
-    },
-    {
       id: 'warehouse_harash',
       name: '🏭 מחסן 4 החרש (מלט ובלות)',
-      subtitle: 'פעיל • העמסת מנוף וחומרים כבדים',
+      subtitle: `${harashOrders.length} הזמנות פעילות • מנוף וחומרים כבדים`,
       avatar: 'https://cdn-icons-png.flaticon.com/512/2897/2897769.png',
       isOnline: true,
       unreadCount: 0,
-      badgeType: 'warehouse'
+      badgeType: 'warehouse',
+      warehouseKey: '4_HARASH'
     },
     {
       id: 'warehouse_talmid',
       name: '🏟️ מחסן 1 התלמיד (גבס ופרופילים)',
-      subtitle: 'פעיל • העמסת חומרי גבס ואינסטלציה',
+      subtitle: `${talmidOrders.length} הזמנות פעילות • גבס ואינסטלציה`,
       avatar: 'https://cdn-icons-png.flaticon.com/512/1532/1532556.png',
       isOnline: true,
       unreadCount: 0,
-      badgeType: 'warehouse'
+      badgeType: 'warehouse',
+      warehouseKey: '1_TALMID'
     }
   ];
 
@@ -221,6 +232,24 @@ export const WhatsAppChat: React.FC<WhatsAppChatProps> = ({
 
   const activeChannelMeta = channels.find(c => c.id === activeChannelId) || channels[0];
   const activeMessages = messagesByChannel[activeChannelId] || [];
+
+  // Filtered orders relevant for current channel
+  const channelOrders = React.useMemo(() => {
+    switch (activeChannelId) {
+      case 'hikmat':
+        return hikmatOrders;
+      case 'ali':
+        return aliOrders;
+      case 'warehouse_harash':
+        return harashOrders;
+      case 'warehouse_talmid':
+        return talmidOrders;
+      case 'morning_report_channel':
+        return orders;
+      default:
+        return [];
+    }
+  }, [activeChannelId, orders, hikmatOrders, aliOrders, harashOrders, talmidOrders]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -248,55 +277,30 @@ export const WhatsAppChat: React.FC<WhatsAppChatProps> = ({
 
   // Push notification permission setup
   const handleEnablePush = async () => {
-    const success = await setupDriverPushSubscription('hikmat');
-    setPushEnabled(true);
-    setPushStatusMessage('✅ התראות OneSignal Web Push הופעלו בהצלחה ב-PWA!');
+    setPushStatusMessage('מאתחל חיבור התראות OneSignal Web Push לנהגים...');
+    const ok = await setupDriverPushSubscription();
+    if (ok) {
+      setPushEnabled(true);
+      setPushStatusMessage('התראות פוש של OneSignal הופעלו בהצלחה ב-PWA! ✅');
+    } else {
+      setPushStatusMessage('הרשאת התראות OneSignal לא אושרה ע"י הדפדפן.');
+    }
     setTimeout(() => setPushStatusMessage(null), 4000);
   };
 
-  // Test Push Notification trigger with Waze link
+  // Test OneSignal Driver Push with direct Waze link
   const handleTestPushNotification = async () => {
-    const sampleOrder = orders[0] || {
-      id: 'demo-order',
-      orderNumber: '6215184',
-      customerName: 'בוקטוס — אתר בנייה',
-      city: 'כפר סבא',
-      siteAddress: 'הרצוג 12',
-      warehouse: '4_HARASH',
-      items: [{ sku: '10010', name: 'מלט אפור 50 ק"ג', quantity: 40, unit: 'שק' }],
-      deposit: { palletsCount: 2, bigBagsCount: 0, euroPalletsCount: 0, blockPalletsCount: 0, barrelsCount: 0, isExempt: false, status: 'יש משטחים' },
-      assignedDriver: 'hikmat',
-      status: 'pending_schedule',
-      receivedAt: '07:30',
-      scheduledTime: '08:30',
-      hasDeliveryNote: false,
-      isCraneRequired: true,
-      wazeUrl: 'https://waze.com/ul?q=%D7%9B%D7%A4%D7%A8%20%D7%A1%D7%91%D7%90%20%D7%94%D7%A8%D7%A6%D7%95%D7%92%2012&navigate=yes'
-    };
-
-    const result = await notifyDriverNewOrder(sampleOrder, '🔔 בדיקת מערכת OneSignal: נסיעה חדשה שובצה בהצלחה עם קישור ישיר ל-Waze!');
-    setPushStatusMessage(result.message);
-    setTimeout(() => setPushStatusMessage(null), 4500);
-
-    // Add confirmation message to active chat
-    const testMsg: ChatMessage = {
-      id: `sys-test-${Date.now()}`,
-      sender: 'system',
-      senderName: 'OneSignal Push Engine',
-      text: `📲 התראת בדיקה של OneSignal נשלחה בהצלחה עבור הזמנה #${sampleOrder.orderNumber}!\n📍 יעד: ${sampleOrder.city}, ${sampleOrder.siteAddress}\n🗺️ קישור ניווט ישיר לוואז הוצמד להתראה.`,
-      timestamp: new Date().toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' }),
-      chatId: activeChannelId,
-      wazeUrl: sampleOrder.wazeUrl
-    };
-
-    setMessagesByChannel(prev => ({
-      ...prev,
-      [activeChannelId]: [...(prev[activeChannelId] || []), testMsg]
-    }));
+    setPushStatusMessage('משגר התראת פוש לנהג חכמת עם קישור ישיר ל-Waze...');
+    const testOrder = orders.find(o => o.assignedDriver === 'hikmat') || orders[0];
+    if (testOrder) {
+      await notifyDriverNewOrder(testOrder);
+      setPushStatusMessage(`התראת OneSignal נשלחה בהצלחה לנהג ${testOrder.driverName || 'חכמת'} עבור הזמנה #${testOrder.orderNumber}! 📲`);
+    }
+    setTimeout(() => setPushStatusMessage(null), 4000);
   };
 
   const quickPrompts = [
-    { label: '📅 ליצור דוח בוקר', text: 'ליצור דוח בוקר' },
+    { label: '📅 דוח בוקר וסידור', text: 'תפיקי לי בבקשה את דוח הבוקר והסידור המלא' },
     { label: '📊 לוח מבצעים ודשבורד', text: 'תראי לי את לוח המבצעים והדשבורד התפעולי של היום' },
     { label: '🔔 בדיקת התראת נהג', text: 'בדיקת התראת פוש לוואז לנהג חכמת' },
     { label: '🏗️ הזמנה לבוקטוס', text: 'תוציא לבוקטוס 40 שקי מלט ו-6 טיט בלות לעמית בהרצוג כפר סבא מחר ב-8 בבוקר' },
@@ -659,9 +663,19 @@ export const WhatsAppChat: React.FC<WhatsAppChatProps> = ({
                         AI
                       </span>
                     )}
+                    {channel.badgeType === 'report' && (
+                      <span className="px-1.5 py-0.5 rounded text-[10px] bg-emerald-950 text-emerald-300 font-bold border border-emerald-800">
+                        {orders.length} הזמנות
+                      </span>
+                    )}
                     {channel.badgeType === 'driver' && (
                       <span className="px-1.5 py-0.5 rounded text-[10px] bg-cyan-950 text-cyan-300 font-bold border border-cyan-800">
-                        {channel.id === 'hikmat' ? `${hikmatOrdersCount} יעדים` : `${aliOrdersCount} יעדים`}
+                        {channel.id === 'hikmat' ? `${hikmatOrders.length} יעדים` : `${aliOrders.length} יעדים`}
+                      </span>
+                    )}
+                    {channel.badgeType === 'warehouse' && (
+                      <span className="px-1.5 py-0.5 rounded text-[10px] bg-amber-950 text-amber-300 font-bold border border-amber-800">
+                        {channel.warehouseKey === '4_HARASH' ? `${harashOrders.length} משאות` : `${talmidOrders.length} משאות`}
                       </span>
                     )}
                   </div>
@@ -717,10 +731,26 @@ export const WhatsAppChat: React.FC<WhatsAppChatProps> = ({
                     נועה AI
                   </span>
                 )}
+                {activeChannelMeta.badgeType === 'driver' && (
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-cyan-950 text-cyan-300 font-bold border border-cyan-800">
+                    נהג משאית
+                  </span>
+                )}
+                {activeChannelMeta.badgeType === 'warehouse' && (
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-950 text-amber-300 font-bold border border-amber-800">
+                    מחסן פעיל
+                  </span>
+                )}
               </div>
               <p className="text-xs text-[#00A884] flex items-center gap-1 font-medium">
                 <span className="w-1.5 h-1.5 rounded-full bg-[#00A884] animate-pulse" />
-                <span>{isProcessing ? 'מקלידה כעת...' : 'מחובר • שירות פעיל'}</span>
+                <span>
+                  {isProcessing 
+                    ? 'מקלידה כעת...' 
+                    : activeChannelId === 'noa' 
+                    ? 'מחובר • שירות פעיל וסנכרון גיליון' 
+                    : `${channelOrders.length} הזמנות משוייכות`}
+                </span>
               </p>
             </div>
           </div>
@@ -773,7 +803,7 @@ export const WhatsAppChat: React.FC<WhatsAppChatProps> = ({
         )}
 
         {/* ======================================================== */}
-        {/* MESSAGES STREAM                                          */}
+        {/* MESSAGES & DYNAMIC ORDER CARDS STREAM                    */}
         {/* ======================================================== */}
         <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 z-10 custom-scrollbar">
           
@@ -797,7 +827,7 @@ export const WhatsAppChat: React.FC<WhatsAppChatProps> = ({
               >
                 {/* Bubble Container */}
                 <div
-                  className={`max-w-[85%] sm:max-w-[70%] rounded-2xl p-3 sm:p-3.5 shadow-md relative group space-y-2 ${
+                  className={`max-w-[90%] sm:max-w-[75%] rounded-2xl p-3 sm:p-3.5 shadow-md relative group space-y-2 ${
                     isUser
                       ? 'bg-[#005C4B] text-[#E9EDEF] rounded-tr-none'
                       : isNoa
@@ -824,7 +854,7 @@ export const WhatsAppChat: React.FC<WhatsAppChatProps> = ({
                     {msg.text}
                   </div>
 
-                  {/* Embedded Interactive Order Card Preview */}
+                  {/* Embedded Interactive Order Card Preview (single parsed order) */}
                   {msg.parsedOrder && (
                     <div className="mt-2 pt-2 border-t border-[#374248]">
                       <OrderCardPreview
@@ -883,6 +913,50 @@ export const WhatsAppChat: React.FC<WhatsAppChatProps> = ({
               </div>
             );
           })}
+
+          {/* ======================================================== */}
+          {/* TAB-SPECIFIC FILTERED ORDERS IN CHAT CANVAS              */}
+          {/* (Hikmat / Ali / Harash / Talmid / Morning Report)        */}
+          {/* ======================================================== */}
+          {activeChannelId !== 'noa' && channelOrders.length > 0 && (
+            <div className="pt-2 space-y-3">
+              <div className="flex items-center justify-between px-2 text-xs font-bold text-slate-400">
+                <span className="flex items-center gap-1.5 text-cyan-400">
+                  <Package className="w-4 h-4" />
+                  הזמנות פעילות בלשונית ({channelOrders.length})
+                </span>
+                <span className="text-[11px] font-mono text-slate-500">
+                  {activeChannelId === 'hikmat' && 'חכמת — מנוף'}
+                  {activeChannelId === 'ali' && 'עלי — פתוחה'}
+                  {activeChannelId === 'warehouse_harash' && 'מחסן 4 החרש'}
+                  {activeChannelId === 'warehouse_talmid' && 'מחסן 1 התלמיד'}
+                  {activeChannelId === 'morning_report_channel' && 'כלל ההזמנות'}
+                </span>
+              </div>
+
+              {channelOrders.map((ord) => (
+                <div key={ord.id} className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+                  <OrderCardPreview
+                    order={ord}
+                    onDispatch={() => setSelectedOrderForDispatch(ord)}
+                    onAudioBriefing={() => {
+                      // Trigger audio briefing TTS
+                      setSelectedOrderForDispatch(ord);
+                    }}
+                  />
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Empty state for channel with no orders */}
+          {activeChannelId !== 'noa' && channelOrders.length === 0 && (
+            <div className="text-center py-8 bg-[#182229]/60 rounded-2xl border border-[#222D34] p-6 text-slate-400">
+              <Package className="w-10 h-10 mx-auto text-slate-600 mb-2" />
+              <p className="font-bold text-sm text-slate-300">אין כרגע הזמנות משוייכות ללשונית זו</p>
+              <p className="text-xs text-slate-500 mt-1">פקודות אספקה חדשות יסוננו ויוצגו כאן אוטומטית</p>
+            </div>
+          )}
 
           {/* Typing indicator */}
           {isProcessing && (
