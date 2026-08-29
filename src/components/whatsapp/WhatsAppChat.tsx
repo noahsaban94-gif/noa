@@ -29,7 +29,11 @@ import {
   Layers,
   Clock,
   MapPin,
-  Filter
+  Filter,
+  FileText,
+  FolderOpen,
+  Mail,
+  Download
 } from 'lucide-react';
 import { ChatMessage, LogisticsOrder, DriverId } from '../../types/logistics';
 import { NOA_AVATAR_URL, NOA_STRICT_SAFEGUARD_RESPONSE, ORDER_MODIFIED_RESET_STATUS, DRIVERS } from '../../lib/constants';
@@ -38,16 +42,21 @@ import { generateMorningReport } from '../../lib/morningReportGenerator';
 import { notifyDriverNewOrder, setupDriverPushSubscription, ONESIGNAL_APP_ID } from '../../lib/notifications';
 import { OrderCardPreview } from './OrderCardPreview';
 import { DispatchBriefingModal } from './DispatchBriefingModal';
+import { PhysicalOrderDocumentCard } from './PhysicalOrderDocumentCard';
+import { OrderFilesView } from './OrderFilesView';
+import { ARUGAT_HABOSEM_ORDER, ARUGAT_HABOSEM_EMAIL_META, listenAndIngestEmailOrder } from '../../lib/emailOrderIngestion';
 
 interface WhatsAppChatProps {
   orders: LogisticsOrder[];
+  theme?: 'light' | 'dark';
+  onToggleTheme?: () => void;
   onAddNewOrder: (order: LogisticsOrder) => void;
   onUpdateOrder: (order: LogisticsOrder) => void;
   onRequestView: (view: 'dashboard' | 'morning_report') => void;
   onProcessingChange?: (isProcessing: boolean) => void;
 }
 
-export type ChatChannelId = 'noa' | 'hikmat' | 'ali' | 'morning_report_channel' | 'warehouse_talmid' | 'warehouse_harash';
+export type ChatChannelId = 'noa' | 'hikmat' | 'ali' | 'morning_report_channel' | 'order_files' | 'warehouse_talmid' | 'warehouse_harash';
 
 interface ChannelMeta {
   id: ChatChannelId;
@@ -56,7 +65,7 @@ interface ChannelMeta {
   avatar: string;
   isOnline: boolean;
   unreadCount: number;
-  badgeType: 'bot' | 'driver' | 'report' | 'warehouse';
+  badgeType: 'bot' | 'driver' | 'report' | 'warehouse' | 'files';
   driverId?: DriverId;
   warehouseKey?: '1_TALMID' | '4_HARASH';
 }
@@ -69,7 +78,7 @@ export const WhatsAppChat: React.FC<WhatsAppChatProps> = ({
   onProcessingChange
 }) => {
   const [activeChannelId, setActiveChannelId] = useState<ChatChannelId>('noa');
-  const [channelFilter, setChannelFilter] = useState<'all' | 'drivers' | 'warehouses'>('all');
+  const [channelFilter, setChannelFilter] = useState<'all' | 'drivers' | 'warehouses' | 'files'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [inputText, setInputText] = useState('');
   const [isRecording, setIsRecording] = useState(false);
@@ -150,6 +159,16 @@ export const WhatsAppChat: React.FC<WhatsAppChatProps> = ({
         timestamp: '07:30',
         chatId: 'warehouse_talmid'
       }
+    ],
+    order_files: [
+      {
+        id: 'files-intro-1',
+        sender: 'noa',
+        senderName: 'נועה AI (מאזין מיילים & Drive)',
+        text: '📑 שלום ראמי! מאזין המיילים של נועה סורק 24/7 מיילים מ-ramims@saban94.co.il דרך comax.co.il.\nכל טופס הזמנה מועתק אוטומטית לתיקיית Google Drive ייעודית (Saban Logistics Cloud), מוצג כאן כטופס הזמנה פיזי ומוזרק ישירות לסידור העבודה!',
+        timestamp: '07:30',
+        chatId: 'order_files'
+      }
     ]
   });
 
@@ -158,6 +177,7 @@ export const WhatsAppChat: React.FC<WhatsAppChatProps> = ({
   const aliOrders = orders.filter(o => o.assignedDriver === 'ali');
   const harashOrders = orders.filter(o => o.warehouse === '4_HARASH');
   const talmidOrders = orders.filter(o => o.warehouse === '1_TALMID');
+  const fileOrders = orders.filter(o => o.orderDocumentUrl || o.emailMeta || o.driveFolderUrl || o.orderNumber === '6215194');
 
   const channels: ChannelMeta[] = [
     {
@@ -168,6 +188,15 @@ export const WhatsAppChat: React.FC<WhatsAppChatProps> = ({
       isOnline: true,
       unreadCount: 1,
       badgeType: 'bot'
+    },
+    {
+      id: 'order_files',
+      name: '📑 קבצי הזמנות ומיילים',
+      subtitle: `${fileOrders.length} מסמכי הזמנה מקוריים • העתקה ל-Drive`,
+      avatar: 'https://cdn-icons-png.flaticon.com/512/337/337946.png',
+      isOnline: true,
+      unreadCount: 1,
+      badgeType: 'files'
     },
     {
       id: 'morning_report_channel',
@@ -223,6 +252,7 @@ export const WhatsAppChat: React.FC<WhatsAppChatProps> = ({
   const filteredChannels = channels.filter(ch => {
     if (channelFilter === 'drivers' && ch.badgeType !== 'driver') return false;
     if (channelFilter === 'warehouses' && ch.badgeType !== 'warehouse') return false;
+    if (channelFilter === 'files' && ch.badgeType !== 'files') return false;
     if (searchQuery) {
       return ch.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
              ch.subtitle.toLowerCase().includes(searchQuery.toLowerCase());
@@ -244,12 +274,14 @@ export const WhatsAppChat: React.FC<WhatsAppChatProps> = ({
         return harashOrders;
       case 'warehouse_talmid':
         return talmidOrders;
+      case 'order_files':
+        return fileOrders;
       case 'morning_report_channel':
         return orders;
       default:
         return [];
     }
-  }, [activeChannelId, orders, hikmatOrders, aliOrders, harashOrders, talmidOrders]);
+  }, [activeChannelId, orders, hikmatOrders, aliOrders, harashOrders, talmidOrders, fileOrders]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -300,6 +332,8 @@ export const WhatsAppChat: React.FC<WhatsAppChatProps> = ({
   };
 
   const quickPrompts = [
+    { label: '📥 האזן למייל (הזמנה 6215194)', text: 'תקשיבי למייל שנכנס מ-comax על הזמנה 6215194 לערוגת הבשם ותחלצי את הקובץ ל-Drive' },
+    { label: '📑 טאב קבצי הזמנות', text: 'תציגי לי את טאב קבצי ההזמנות והמסמכים המקוריים' },
     { label: '📅 דוח בוקר וסידור', text: 'תפיקי לי בבקשה את דוח הבוקר והסידור המלא' },
     { label: '📊 לוח מבצעים ודשבורד', text: 'תראי לי את לוח המבצעים והדשבורד התפעולי של היום' },
     { label: '🔔 בדיקת התראת נהג', text: 'בדיקת התראת פוש לוואז לנהג חכמת' },
@@ -332,7 +366,45 @@ export const WhatsAppChat: React.FC<WhatsAppChatProps> = ({
 
     const lowerText = text.toLowerCase();
 
-    // 0. DETECT MORNING REPORT REQUEST
+    // 0. DETECT EMAIL INGESTION & COMAX ORDER PARSING (ARUGAT HABOSEM #6215194)
+    if (
+      lowerText.includes('מייל') || 
+      lowerText.includes('אימייל') || 
+      lowerText.includes('ערוגת הבשם') || 
+      lowerText.includes('6215194') || 
+      lowerText.includes('קומקס') || 
+      lowerText.includes('קובץ הזמנה') ||
+      lowerText.includes('האזנה') ||
+      lowerText.includes('תחלצי')
+    ) {
+      setTimeout(async () => {
+        const result = await listenAndIngestEmailOrder();
+        onAddNewOrder(result.order);
+        notifyDriverNewOrder(result.order);
+
+        const emailMsg: ChatMessage = {
+          id: `noa-email-${Date.now()}`,
+          sender: 'noa',
+          senderName: 'נועה AI (סדרנית ראשית)',
+          text: `👑 ראמי אחי אהובי! קלטתי ופיענחתי בהצלחה את המייל שנכנס מ-Comax!\n\n📑 **הזמנה 6215194 ללקוח: ערוגת הבשם**\n📍 **יעד:** דרך הבשמים 8, מושב בצרה\n🚚 **שיבוץ:** חכמת (משאית מנוף 26 טון) ממחסן 4 החרש\n📦 **פריטים שחולצו:** 10 בלות חול + 8 בלות סומסום + 30 שקי מלט נשר + הובלת מנוף\n🏷️ **אימות פקדונות:** 18 בלות + 2 משטחי סבן\n\n📁 **סנכרון Drive:** קובץ ההזמנה המקורי (PDF) הועתק אוטומטית לתיקיית *Saban Logistics Cloud / הזמנות קומקס 2026* ושובץ בלשונית קבצי הזמנות.\n\nלהלן טופס ההזמנה הפיזי המקורי עם גישה לקובץ ב-Drive ושיגור ישיר:`,
+          timestamp: new Date().toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' }),
+          chatId: activeChannelId,
+          parsedOrder: result.order,
+          orderEmailMeta: ARUGAT_HABOSEM_EMAIL_META,
+          isEmailIngestionCard: true,
+          wazeUrl: result.order.wazeUrl
+        };
+
+        setMessagesByChannel(prev => ({
+          ...prev,
+          [activeChannelId]: [...(prev[activeChannelId] || []), emailMsg]
+        }));
+        setIsProcessing(false);
+      }, 800);
+      return;
+    }
+
+    // 0.1 DETECT MORNING REPORT REQUEST
     if (
       lowerText.includes('דוח בוקר') || 
       lowerText.includes('ליצור דוח בוקר') || 
@@ -620,6 +692,16 @@ export const WhatsAppChat: React.FC<WhatsAppChatProps> = ({
             >
               🏭 מחסנים
             </button>
+            <button
+              onClick={() => setChannelFilter('files')}
+              className={`px-3 py-1 rounded-full font-medium transition ${
+                channelFilter === 'files' 
+                  ? 'bg-[#00A884] text-[#111B21] font-bold' 
+                  : 'bg-[#202C33] text-[#8696A0] hover:text-white'
+              }`}
+            >
+              📑 קבצי הזמנות
+            </button>
           </div>
         </div>
 
@@ -803,175 +885,198 @@ export const WhatsAppChat: React.FC<WhatsAppChatProps> = ({
         )}
 
         {/* ======================================================== */}
-        {/* MESSAGES & DYNAMIC ORDER CARDS STREAM                    */}
+        {/* ACTIVE CONTENT: ORDER FILES VIEW OR MESSAGE STREAM        */}
         {/* ======================================================== */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 z-10 custom-scrollbar">
-          
-          {/* WhatsApp Date Divider */}
-          <div className="flex justify-center my-2">
-            <span className="px-3 py-1 rounded-lg bg-[#182229] border border-[#222D34] text-[11px] font-medium text-[#8696A0] shadow-sm">
-              היום • {new Date().toLocaleDateString('he-IL', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
-            </span>
+        {activeChannelId === 'order_files' ? (
+          <div className="flex-1 overflow-hidden z-10 flex flex-col">
+            <OrderFilesView 
+              orders={orders}
+              onAddNewOrder={(newOrd) => {
+                onAddNewOrder(newOrd);
+                notifyDriverNewOrder(newOrd);
+              }}
+              onUpdateOrder={onUpdateOrder}
+              onSelectOrderForChat={(ord) => setSelectedOrderForDispatch(ord)}
+            />
           </div>
+        ) : (
+          <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 z-10 custom-scrollbar">
+            
+            {/* WhatsApp Date Divider */}
+            <div className="flex justify-center my-2">
+              <span className="px-3 py-1 rounded-lg bg-[#182229] border border-[#222D34] text-[11px] font-medium text-[#8696A0] shadow-sm">
+                היום • {new Date().toLocaleDateString('he-IL', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+              </span>
+            </div>
 
-          {/* Messages list */}
-          {activeMessages.map((msg) => {
-            const isUser = msg.sender === 'user';
-            const isNoa = msg.sender === 'noa';
-            const isDriver = msg.sender === 'driver';
+            {/* Messages list */}
+            {activeMessages.map((msg) => {
+              const isUser = msg.sender === 'user';
+              const isNoa = msg.sender === 'noa';
+              const isDriver = msg.sender === 'driver';
 
-            return (
-              <div
-                key={msg.id}
-                className={`flex flex-col ${isUser ? 'items-start' : 'items-end'} transition-all`}
-              >
-                {/* Bubble Container */}
+              return (
                 <div
-                  className={`max-w-[90%] sm:max-w-[75%] rounded-2xl p-3 sm:p-3.5 shadow-md relative group space-y-2 ${
-                    isUser
-                      ? 'bg-[#005C4B] text-[#E9EDEF] rounded-tr-none'
-                      : isNoa
-                      ? 'bg-[#202C33] text-[#E9EDEF] rounded-tl-none border border-[#26353E]'
-                      : 'bg-[#182229] text-[#E9EDEF] rounded-tl-none border border-[#2A3942]'
-                  }`}
+                  key={msg.id}
+                  className={`flex flex-col ${isUser ? 'items-start' : 'items-end'} transition-all`}
                 >
-                  {/* Sender Name if not user */}
-                  {!isUser && (
-                    <div className="flex items-center justify-between text-xs font-bold border-b border-[#2A3942]/60 pb-1.5 mb-1.5">
-                      <span className={isNoa ? 'text-[#00A884]' : 'text-cyan-400'}>
-                        {msg.senderName}
-                      </span>
-                      {isNoa && (
-                        <span className="text-[10px] bg-[#00A884]/20 text-[#00A884] px-1.5 py-0.2 rounded font-mono">
-                          AI DISPATCH
+                  {/* Bubble Container */}
+                  <div
+                    className={`max-w-[90%] sm:max-w-[75%] rounded-2xl p-3 sm:p-3.5 shadow-md relative group space-y-2 ${
+                      isUser
+                        ? 'bg-[#005C4B] text-[#E9EDEF] rounded-tr-none'
+                        : isNoa
+                        ? 'bg-[#202C33] text-[#E9EDEF] rounded-tl-none border border-[#26353E]'
+                        : 'bg-[#182229] text-[#E9EDEF] rounded-tl-none border border-[#2A3942]'
+                    }`}
+                  >
+                    {/* Sender Name if not user */}
+                    {!isUser && (
+                      <div className="flex items-center justify-between text-xs font-bold border-b border-[#2A3942]/60 pb-1.5 mb-1.5">
+                        <span className={isNoa ? 'text-[#00A884]' : 'text-cyan-400'}>
+                          {msg.senderName}
                         </span>
-                      )}
+                        {isNoa && (
+                          <span className="text-[10px] bg-[#00A884]/20 text-[#00A884] px-1.5 py-0.2 rounded font-mono">
+                            AI DISPATCH
+                          </span>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Message Text */}
+                    <div className="text-xs sm:text-sm whitespace-pre-wrap leading-relaxed">
+                      {msg.text}
                     </div>
-                  )}
 
-                  {/* Message Text */}
-                  <div className="text-xs sm:text-sm whitespace-pre-wrap leading-relaxed">
-                    {msg.text}
-                  </div>
+                    {/* Embedded Physical Order Document Card (if from email / Comax) */}
+                    {(msg.isEmailIngestionCard || msg.orderEmailMeta) && msg.parsedOrder ? (
+                      <div className="mt-2 pt-2 border-t border-[#374248]">
+                        <PhysicalOrderDocumentCard
+                          order={msg.parsedOrder as LogisticsOrder}
+                          emailMeta={msg.orderEmailMeta || ARUGAT_HABOSEM_EMAIL_META}
+                          onDispatch={() => setSelectedOrderForDispatch(msg.parsedOrder as LogisticsOrder)}
+                        />
+                      </div>
+                    ) : msg.parsedOrder ? (
+                      /* Standard Embedded Interactive Order Card Preview */
+                      <div className="mt-2 pt-2 border-t border-[#374248]">
+                        <OrderCardPreview
+                          order={msg.parsedOrder as LogisticsOrder}
+                          onDispatch={() => setSelectedOrderForDispatch(msg.parsedOrder as LogisticsOrder)}
+                        />
+                      </div>
+                    ) : null}
 
-                  {/* Embedded Interactive Order Card Preview (single parsed order) */}
-                  {msg.parsedOrder && (
-                    <div className="mt-2 pt-2 border-t border-[#374248]">
-                      <OrderCardPreview
-                        order={msg.parsedOrder as LogisticsOrder}
-                        onDispatch={() => setSelectedOrderForDispatch(msg.parsedOrder as LogisticsOrder)}
-                      />
-                    </div>
-                  )}
+                    {/* Direct Action Trigger Buttons */}
+                    {msg.viewTrigger && (
+                      <div className="pt-2 flex flex-wrap items-center gap-2">
+                        {msg.viewTrigger === 'morning_report' && (
+                          <button
+                            onClick={() => onRequestView('morning_report')}
+                            className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-bold flex items-center gap-1.5 shadow"
+                          >
+                            <Calendar className="w-3.5 h-3.5" />
+                            <span>פתח דוח בוקר מלא</span>
+                          </button>
+                        )}
 
-                  {/* Direct Action Trigger Buttons */}
-                  {msg.viewTrigger && (
-                    <div className="pt-2 flex flex-wrap items-center gap-2">
-                      {msg.viewTrigger === 'morning_report' && (
-                        <button
-                          onClick={() => onRequestView('morning_report')}
-                          className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-bold flex items-center gap-1.5 shadow"
+                        {msg.viewTrigger === 'dashboard' && (
+                          <button
+                            onClick={() => onRequestView('dashboard')}
+                            className="px-3 py-1.5 rounded-xl bg-cyan-700 hover:bg-cyan-600 text-white text-xs font-bold flex items-center gap-1.5 shadow"
+                          >
+                            <LayoutDashboard className="w-3.5 h-3.5" />
+                            <span>פתח לוח מבצעים ודשבורד</span>
+                          </button>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Direct Waze Link button if present */}
+                    {msg.wazeUrl && (
+                      <div className="pt-1.5">
+                        <a
+                          href={msg.wazeUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-[#111B21] hover:bg-[#182229] border border-cyan-500/40 text-cyan-300 text-xs font-bold transition"
                         >
-                          <Calendar className="w-3.5 h-3.5" />
-                          <span>פתח דוח בוקר מלא</span>
-                        </button>
-                      )}
+                          <NavIcon className="w-3.5 h-3.5 text-cyan-400" />
+                          <span>פתח ניווט Waze ישיר</span>
+                        </a>
+                      </div>
+                    )}
 
-                      {msg.viewTrigger === 'dashboard' && (
-                        <button
-                          onClick={() => onRequestView('dashboard')}
-                          className="px-3 py-1.5 rounded-xl bg-cyan-700 hover:bg-cyan-600 text-white text-xs font-bold flex items-center gap-1.5 shadow"
-                        >
-                          <LayoutDashboard className="w-3.5 h-3.5" />
-                          <span>פתח לוח מבצעים ודשבורד</span>
-                        </button>
-                      )}
+                    {/* Time & Delivery Checkmarks */}
+                    <div className="flex items-center justify-end gap-1 text-[10px] text-[#8696A0] pt-0.5">
+                      <span>{msg.timestamp}</span>
+                      {isUser && <CheckCheck className="w-3.5 h-3.5 text-[#53BDEB]" />}
                     </div>
-                  )}
-
-                  {/* Direct Waze Link button if present */}
-                  {msg.wazeUrl && (
-                    <div className="pt-1.5">
-                      <a
-                        href={msg.wazeUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-[#111B21] hover:bg-[#182229] border border-cyan-500/40 text-cyan-300 text-xs font-bold transition"
-                      >
-                        <NavIcon className="w-3.5 h-3.5 text-cyan-400" />
-                        <span>פתח ניווט Waze ישיר</span>
-                      </a>
-                    </div>
-                  )}
-
-                  {/* Time & Delivery Checkmarks */}
-                  <div className="flex items-center justify-end gap-1 text-[10px] text-[#8696A0] pt-0.5">
-                    <span>{msg.timestamp}</span>
-                    {isUser && <CheckCheck className="w-3.5 h-3.5 text-[#53BDEB]" />}
                   </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
 
-          {/* ======================================================== */}
-          {/* TAB-SPECIFIC FILTERED ORDERS IN CHAT CANVAS              */}
-          {/* (Hikmat / Ali / Harash / Talmid / Morning Report)        */}
-          {/* ======================================================== */}
-          {activeChannelId !== 'noa' && channelOrders.length > 0 && (
-            <div className="pt-2 space-y-3">
-              <div className="flex items-center justify-between px-2 text-xs font-bold text-slate-400">
-                <span className="flex items-center gap-1.5 text-cyan-400">
-                  <Package className="w-4 h-4" />
-                  הזמנות פעילות בלשונית ({channelOrders.length})
-                </span>
-                <span className="text-[11px] font-mono text-slate-500">
-                  {activeChannelId === 'hikmat' && 'חכמת — מנוף'}
-                  {activeChannelId === 'ali' && 'עלי — פתוחה'}
-                  {activeChannelId === 'warehouse_harash' && 'מחסן 4 החרש'}
-                  {activeChannelId === 'warehouse_talmid' && 'מחסן 1 התלמיד'}
-                  {activeChannelId === 'morning_report_channel' && 'כלל ההזמנות'}
-                </span>
-              </div>
-
-              {channelOrders.map((ord) => (
-                <div key={ord.id} className="animate-in fade-in slide-in-from-bottom-2 duration-300">
-                  <OrderCardPreview
-                    order={ord}
-                    onDispatch={() => setSelectedOrderForDispatch(ord)}
-                    onAudioBriefing={() => {
-                      // Trigger audio briefing TTS
-                      setSelectedOrderForDispatch(ord);
-                    }}
-                  />
+            {/* ======================================================== */}
+            {/* TAB-SPECIFIC FILTERED ORDERS IN CHAT CANVAS              */}
+            {/* (Hikmat / Ali / Harash / Talmid / Morning Report)        */}
+            {/* ======================================================== */}
+            {activeChannelId !== 'noa' && channelOrders.length > 0 && (
+              <div className="pt-2 space-y-3">
+                <div className="flex items-center justify-between px-2 text-xs font-bold text-slate-400">
+                  <span className="flex items-center gap-1.5 text-cyan-400">
+                    <Package className="w-4 h-4" />
+                    הזמנות פעילות בלשונית ({channelOrders.length})
+                  </span>
+                  <span className="text-[11px] font-mono text-slate-500">
+                    {activeChannelId === 'hikmat' && 'חכמת — מנוף'}
+                    {activeChannelId === 'ali' && 'עלי — פתוחה'}
+                    {activeChannelId === 'warehouse_harash' && 'מחסן 4 החרש'}
+                    {activeChannelId === 'warehouse_talmid' && 'מחסן 1 התלמיד'}
+                    {activeChannelId === 'morning_report_channel' && 'כלל ההזמנות'}
+                  </span>
                 </div>
-              ))}
-            </div>
-          )}
 
-          {/* Empty state for channel with no orders */}
-          {activeChannelId !== 'noa' && channelOrders.length === 0 && (
-            <div className="text-center py-8 bg-[#182229]/60 rounded-2xl border border-[#222D34] p-6 text-slate-400">
-              <Package className="w-10 h-10 mx-auto text-slate-600 mb-2" />
-              <p className="font-bold text-sm text-slate-300">אין כרגע הזמנות משוייכות ללשונית זו</p>
-              <p className="text-xs text-slate-500 mt-1">פקודות אספקה חדשות יסוננו ויוצגו כאן אוטומטית</p>
-            </div>
-          )}
-
-          {/* Typing indicator */}
-          {isProcessing && (
-            <div className="flex items-end">
-              <div className="bg-[#202C33] border border-[#26353E] rounded-2xl rounded-tl-none p-3 shadow-md flex items-center gap-2 text-xs text-[#8696A0]">
-                <span className="w-2 h-2 rounded-full bg-[#00A884] animate-bounce" />
-                <span className="w-2 h-2 rounded-full bg-[#00A884] animate-bounce [animation-delay:0.2s]" />
-                <span className="w-2 h-2 rounded-full bg-[#00A884] animate-bounce [animation-delay:0.4s]" />
-                <span className="font-semibold text-[#00A884] ml-1">נועה AI מעבדת פקודה ומסנכרנת מול הגיליון...</span>
+                {channelOrders.map((ord) => (
+                  <div key={ord.id} className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+                    <OrderCardPreview
+                      order={ord}
+                      onDispatch={() => setSelectedOrderForDispatch(ord)}
+                      onAudioBriefing={() => {
+                        // Trigger audio briefing TTS
+                        setSelectedOrderForDispatch(ord);
+                      }}
+                    />
+                  </div>
+                ))}
               </div>
-            </div>
-          )}
+            )}
 
-          <div ref={messagesEndRef} />
-        </div>
+            {/* Empty state for channel with no orders */}
+            {activeChannelId !== 'noa' && channelOrders.length === 0 && (
+              <div className="text-center py-8 bg-[#182229]/60 rounded-2xl border border-[#222D34] p-6 text-slate-400">
+                <Package className="w-10 h-10 mx-auto text-slate-600 mb-2" />
+                <p className="font-bold text-sm text-slate-300">אין כרגע הזמנות משוייכות ללשונית זו</p>
+                <p className="text-xs text-slate-500 mt-1">פקודות אספקה חדשות יסוננו ויוצגו כאן אוטומטית</p>
+              </div>
+            )}
+
+            {/* Typing indicator */}
+            {isProcessing && (
+              <div className="flex items-end">
+                <div className="bg-[#202C33] border border-[#26353E] rounded-2xl rounded-tl-none p-3 shadow-md flex items-center gap-2 text-xs text-[#8696A0]">
+                  <span className="w-2 h-2 rounded-full bg-[#00A884] animate-bounce" />
+                  <span className="w-2 h-2 rounded-full bg-[#00A884] animate-bounce [animation-delay:0.2s]" />
+                  <span className="w-2 h-2 rounded-full bg-[#00A884] animate-bounce [animation-delay:0.4s]" />
+                  <span className="font-semibold text-[#00A884] ml-1">נועה AI מעבדת פקודה ומסנכרנת מול הגיליון...</span>
+                </div>
+              </div>
+            )}
+
+            <div ref={messagesEndRef} />
+          </div>
+        )}
 
         {/* ======================================================== */}
         {/* QUICK PROMPT CHIPS                                       */}
@@ -997,6 +1102,37 @@ export const WhatsAppChat: React.FC<WhatsAppChatProps> = ({
             <div className="text-[11px] font-bold text-[#8696A0] px-2 mb-1">
               תצוגות ומסכי ח. סבן
             </div>
+
+            {/* Ingest Comax Email Order */}
+            <button 
+              onClick={() => { 
+                handleSendMessage('תקשיבי למייל שנכנס מ-comax על הזמנה 6215194 לערוגת הבשם ותחלצי את הקובץ ל-Drive'); 
+                setShowAttachMenu(false); 
+              }}
+              className="w-full p-2.5 hover:bg-[#182229] rounded-xl flex items-center gap-3 text-right transition border border-emerald-500/30 bg-emerald-950/30"
+            >
+              <div className="w-8 h-8 rounded-lg bg-emerald-900 text-emerald-300 border border-emerald-600 flex items-center justify-center">
+                <Mail className="w-4 h-4" />
+              </div>
+              <div>
+                <div className="font-bold text-emerald-300">האזן וקלוט מייל קומקס</div>
+                <div className="text-[10px] text-[#8696A0]">הזמנה 6215194 • ערוגת הבשם • העתקה ל-Drive</div>
+              </div>
+            </button>
+
+            {/* Switch to Order Files Tab */}
+            <button 
+              onClick={() => { setActiveChannelId('order_files'); setShowAttachMenu(false); }}
+              className="w-full p-2.5 hover:bg-[#182229] rounded-xl flex items-center gap-3 text-right transition"
+            >
+              <div className="w-8 h-8 rounded-lg bg-indigo-950 text-indigo-400 border border-indigo-800 flex items-center justify-center">
+                <FolderOpen className="w-4 h-4" />
+              </div>
+              <div>
+                <div className="font-bold">טאב קבצי הזמנות & Drive</div>
+                <div className="text-[10px] text-[#8696A0]">ארכיון מסמכים מקוריים מ-Comax</div>
+              </div>
+            </button>
 
             <button 
               onClick={() => { onRequestView('morning_report'); setShowAttachMenu(false); }}
